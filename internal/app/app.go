@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -42,24 +43,31 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
-	id := string(body)
+	link := string(body)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	if len(id) > 2048 {
+	if len(link) > 2048 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("error, the link cannot be longer than 2048 characters"))
 		return
-	} else if len(id) < 7 {
+	} else if len(link) < 7 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("error, the link cannot be shortened"))
 		return
+	} else {
+		_, err := url.ParseRequestURI(link)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("error, the link is invalid"))
+			return
+		}
 	}
 
-	url, ok := getURL(id)
+	url, ok := getURL(link)
 	var err error
 	if !ok {
-		url, err = shortener(id)
+		url, err = shortener(link)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("error, failed to create a shortened URL"))
@@ -111,6 +119,7 @@ func shortener(s string) (string, error) {
 	id = strings.ReplaceAll(id, "=", "")
 
 	pairs[id] = s
+	fmt.Println(pairs)
 
 	return id, nil
 }
