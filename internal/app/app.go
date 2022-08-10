@@ -3,6 +3,7 @@ package app
 import (
 	"crypto"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,9 @@ import (
 var pairs = make(map[string]string)
 
 func ShortenerStart(host, port string) {
+	pairsStr, _ := ioutil.ReadFile("db")
+	json.Unmarshal(pairsStr, &pairs)
+
 	http.HandleFunc("/", mainHandler)
 
 	fmt.Println("The service works on", host, ":", port)
@@ -122,6 +126,9 @@ func shortener(s string) (string, error) {
 
 	pairs[id] = s
 	fmt.Println(pairs)
+
+	jsonStr, _ := json.Marshal(pairs)
+	ioutil.WriteFile("db", []byte(jsonStr), 0666)
 
 	return id, nil
 }
