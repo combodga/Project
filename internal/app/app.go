@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -56,7 +55,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("error, the link cannot be shortened"))
 		return
 	} else {
-		_, err := url.ParseRequestURI(link)
+		// _, err := url.ParseRequestURI(link)
+		_, err := http.Get(link)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("error, the link is invalid"))
