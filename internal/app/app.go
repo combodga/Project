@@ -50,18 +50,19 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("error, the link cannot be longer than 2048 characters"))
 		return
-	} else if len(link) < 7 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("error, the link cannot be shortened"))
-		return
+		// } else if len(link) < 7 {
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// 	w.Write([]byte("error, the link cannot be shortened"))
+		// 	return
 	} else {
 		// _, err := url.ParseRequestURI(link)
-		_, err := http.Get(link)
+		resp, err := http.Get(link)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("error, the link is invalid"))
 			return
 		}
+		defer resp.Body.Close()
 	}
 
 	url, ok := getURL(link)
