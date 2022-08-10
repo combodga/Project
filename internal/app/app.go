@@ -28,7 +28,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := path[1:]
 
-	url, ok := getUrl(id)
+	url, ok := getURL(id)
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -56,7 +56,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, ok := getUrl(id)
+	url, ok := getURL(id)
 	var err error
 	if !ok {
 		url, err = shortener(id)
@@ -86,7 +86,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getUrl(id string) (string, bool) {
+func getURL(id string) (string, bool) {
 	if len(id) <= 0 {
 		return "", false
 	}
