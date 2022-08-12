@@ -130,5 +130,5 @@ func shortener(s string) (string, error) {
 	jsonStr, _ := json.Marshal(pairs)
 	ioutil.WriteFile("db", []byte(jsonStr), 0666)
 
-	return id, nil
+	return "http://localhost:8080/" + id, nil
 }
