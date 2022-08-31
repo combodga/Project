@@ -7,8 +7,6 @@ import (
 )
 
 func Start(host, port string) error {
-	// handler.SetHost(host)
-	// handler.SetPort(port)
 	handler.Host = host
 	handler.Port = port
 

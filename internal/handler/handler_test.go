@@ -24,20 +24,6 @@ var (
 	}
 )
 
-// func TestSetHost(t *testing.T) {
-//     SetHost("test")
-//     if host != "test" {
-//         t.Error("can't set host")
-//     }
-// }
-
-// func TestSetPort(t *testing.T) {
-//     SetPort("9090")
-//     if port != "9090" {
-//         t.Error("can't set port")
-//     }
-// }
-
 func TestShortener(t *testing.T) {
 	for _, testCase := range tests {
 		short, err := shortener(testCase.long)
@@ -52,8 +38,6 @@ func TestShortener(t *testing.T) {
 }
 
 func TestCreateURL(t *testing.T) {
-	// SetHost("localhost")
-	// SetPort("8080")
 	Host = "localhost"
 	Port = "8080"
 
