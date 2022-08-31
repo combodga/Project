@@ -3,8 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"io/ioutil"
-
-	cmap "github.com/orcaman/concurrent-map/v2"
+	"sync"
 )
 
 const (
@@ -12,18 +11,17 @@ const (
 )
 
 var (
-	pairs = cmap.New[string]()
+	pairs = make(map[string]string)
+	mutex = &sync.RWMutex{}
 )
 
 func Init() {
-	pairsStr, err := ioutil.ReadFile(dbFile)
+	pairsStr, err := ioutil.ReadFile("db")
 	if err != nil {
 		panic(err)
 	}
 
-	m := make(map[string]string)
-	json.Unmarshal(pairsStr, &m)
-	pairs.MSet(m)
+	json.Unmarshal(pairsStr, &pairs)
 }
 
 func GetURL(id string) (string, bool) {
@@ -31,7 +29,9 @@ func GetURL(id string) (string, bool) {
 		return "", false
 	}
 
-	url, ok := pairs.Get(id)
+	mutex.RLock()
+	url, ok := pairs[id]
+	mutex.RUnlock()
 	if !ok {
 		return "", false
 	}
@@ -40,14 +40,16 @@ func GetURL(id string) (string, bool) {
 }
 
 func SetURL(id, link string) error {
-	pairs.Set(id, link)
+	mutex.Lock()
+	pairs[id] = link
+	mutex.Unlock()
 
-	jsonBytes, err := pairs.MarshalJSON()
+	jsonStr, err := json.Marshal(pairs)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(dbFile, jsonBytes, 0666)
+	err = ioutil.WriteFile(dbFile, []byte(jsonStr), 0666)
 	if err != nil {
 		return err
 	}
