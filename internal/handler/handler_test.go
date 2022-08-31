@@ -91,7 +91,7 @@ func TestCreateURLInJSON(t *testing.T) {
 	Port = "8080"
 
 	e := echo.New()
-	request := httptest.NewRequest(http.MethodPost, Host+":"+Port, strings.NewReader("{\"url\":\""+strings.Repeat("A", 2049)+"\"}"))
+	request := httptest.NewRequest(http.MethodPost, Host+":"+Port+"/api/shorten", strings.NewReader("{\"url\":\""+strings.Repeat("A", 2049)+"\"}"))
 
 	recorder := httptest.NewRecorder()
 	c := e.NewContext(request, recorder)
@@ -110,7 +110,7 @@ func TestCreateURLInJSON(t *testing.T) {
 		}
 
 		e := echo.New()
-		request := httptest.NewRequest(http.MethodPost, Host+":"+Port, strings.NewReader("{\"url\":\""+testCase.long+"\"}"))
+		request := httptest.NewRequest(http.MethodPost, Host+":"+Port+"/api/shorten", strings.NewReader("{\"url\":\""+testCase.long+"\"}"))
 
 		recorder := httptest.NewRecorder()
 		c := e.NewContext(request, recorder)
