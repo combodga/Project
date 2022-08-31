@@ -95,7 +95,7 @@ func TestCreateURLInJSON(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	c := e.NewContext(request, recorder)
-	CreateURL(c)
+	CreateURLInJSON(c)
 
 	result := recorder.Result()
 	defer result.Body.Close()
@@ -114,7 +114,7 @@ func TestCreateURLInJSON(t *testing.T) {
 
 		recorder := httptest.NewRecorder()
 		c := e.NewContext(request, recorder)
-		CreateURL(c)
+		CreateURLInJSON(c)
 
 		result := recorder.Result()
 		defer result.Body.Close()
