@@ -2,6 +2,8 @@ package handler
 
 import (
 	"crypto"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +19,10 @@ var (
 	Host = "localhost"
 	Port = "8080"
 )
+
+type Link struct {
+	Result string `json:"result"`
+}
 
 func CreateURL(c echo.Context) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
@@ -49,6 +55,51 @@ func CreateURL(c echo.Context) error {
 	}
 
 	return c.String(http.StatusCreated, "http://"+Host+":"+Port+"/"+id)
+}
+
+func CreateURLInJSON(c echo.Context) error {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
+
+	data := make(map[string]string)
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return err
+	}
+
+	link, ok := data["url"]
+	if !ok {
+		return errors.New("error reading json")
+	}
+
+	if len(link) > 2048 {
+		return c.String(http.StatusBadRequest, "error, the link cannot be longer than 2048 characters")
+	}
+
+	_, err = url.ParseRequestURI(link)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "error, the link is invalid")
+	}
+
+	id, ok := storage.GetURL(link)
+	if !ok {
+		id, err = shortener(link)
+		if err != nil {
+			return c.String(http.StatusBadRequest, "error, failed to create a shortened URL")
+		}
+	}
+
+	err = storage.SetURL(id, link)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
+	}
+
+	l := &Link{
+		Result: "http://" + Host + ":" + Port + "/" + id,
+	}
+	return c.JSON(http.StatusCreated, l)
 }
 
 func RetrieveURL(c echo.Context) error {

@@ -13,6 +13,7 @@ func Start(host, port string) error {
 	e := echo.New()
 	e.POST("/", handler.CreateURL)
 	e.GET("/:id", handler.RetrieveURL)
+	e.POST("/api/shorten", handler.CreateURLInJSON)
 
 	e.Logger.Fatal(e.Start(host + ":" + port))
 
