@@ -38,11 +38,8 @@ func TestShortener(t *testing.T) {
 }
 
 func TestCreateURL(t *testing.T) {
-	Host = "localhost"
-	Port = "8080"
-
 	e := echo.New()
-	request := httptest.NewRequest(http.MethodPost, Host+":"+Port, strings.NewReader(strings.Repeat("A", 2049)))
+	request := httptest.NewRequest(http.MethodPost, ServerAddr, strings.NewReader(strings.Repeat("A", 2049)))
 
 	recorder := httptest.NewRecorder()
 	c := e.NewContext(request, recorder)
@@ -61,7 +58,7 @@ func TestCreateURL(t *testing.T) {
 		}
 
 		e := echo.New()
-		request := httptest.NewRequest(http.MethodPost, Host+":"+Port, strings.NewReader(testCase.long))
+		request := httptest.NewRequest(http.MethodPost, ServerAddr, strings.NewReader(testCase.long))
 
 		recorder := httptest.NewRecorder()
 		c := e.NewContext(request, recorder)
@@ -80,18 +77,16 @@ func TestCreateURL(t *testing.T) {
 		}
 
 		short := string(body)
-		if short != "http://"+Host+":"+Port+"/"+testCase.short {
-			t.Fatalf("expected answer to be %v; got %v", "http://"+Host+":"+Port+"/"+testCase.short, short)
+		expected := BaseURL + "/" + testCase.short
+		if short != expected {
+			t.Fatalf("expected answer to be %v; got %v", expected, short)
 		}
 	}
 }
 
 func TestCreateURLInJSON(t *testing.T) {
-	Host = "localhost"
-	Port = "8080"
-
 	e := echo.New()
-	request := httptest.NewRequest(http.MethodPost, Host+":"+Port+"/api/shorten", strings.NewReader("{\"url\":\""+strings.Repeat("A", 2049)+"\"}"))
+	request := httptest.NewRequest(http.MethodPost, "http://"+ServerAddr+"/api/shorten", strings.NewReader("{\"url\":\""+strings.Repeat("A", 2049)+"\"}"))
 
 	recorder := httptest.NewRecorder()
 	c := e.NewContext(request, recorder)
@@ -110,7 +105,7 @@ func TestCreateURLInJSON(t *testing.T) {
 		}
 
 		e := echo.New()
-		request := httptest.NewRequest(http.MethodPost, Host+":"+Port+"/api/shorten", strings.NewReader("{\"url\":\""+testCase.long+"\"}"))
+		request := httptest.NewRequest(http.MethodPost, ServerAddr+"/api/shorten", strings.NewReader("{\"url\":\""+testCase.long+"\"}"))
 
 		recorder := httptest.NewRecorder()
 		c := e.NewContext(request, recorder)
@@ -137,11 +132,8 @@ func TestCreateURLInJSON(t *testing.T) {
 }
 
 func TestRetrieveURL(t *testing.T) {
-	Host = "localhost"
-	Port = "8080"
-
 	e := echo.New()
-	request := httptest.NewRequest(http.MethodGet, "http://"+Host+":"+Port+"/", nil)
+	request := httptest.NewRequest(http.MethodGet, "http://"+ServerAddr+"/", nil)
 
 	recorder := httptest.NewRecorder()
 	c := e.NewContext(request, recorder)

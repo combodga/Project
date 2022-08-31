@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	Host = "localhost"
-	Port = "8080"
+	ServerAddr = "localhost:8080"
+	BaseURL    = "http://" + ServerAddr
 )
 
 type Link struct {
@@ -54,7 +54,7 @@ func CreateURL(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
 	}
 
-	return c.String(http.StatusCreated, "http://"+Host+":"+Port+"/"+id)
+	return c.String(http.StatusCreated, BaseURL+"/"+id)
 }
 
 func CreateURLInJSON(c echo.Context) error {
@@ -97,7 +97,7 @@ func CreateURLInJSON(c echo.Context) error {
 	}
 
 	l := &Link{
-		Result: "http://" + Host + ":" + Port + "/" + id,
+		Result: BaseURL + "/" + id,
 	}
 	return c.JSON(http.StatusCreated, l)
 }
