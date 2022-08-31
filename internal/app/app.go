@@ -2,13 +2,15 @@ package app
 
 import (
 	"github.com/combodga/Project/internal/handler"
+	"github.com/combodga/Project/internal/storage"
 
 	"github.com/labstack/echo/v4"
 )
 
-func Start(serverAddr, baseURL string) error {
+func Start(serverAddr, baseURL, dbFile string) error {
 	handler.ServerAddr = serverAddr
 	handler.BaseURL = baseURL
+	storage.DbFile = dbFile
 
 	e := echo.New()
 	e.POST("/", handler.CreateURL)

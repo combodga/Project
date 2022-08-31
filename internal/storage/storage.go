@@ -3,23 +3,21 @@ package storage
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"sync"
 )
 
 var (
-	dbFile = ""
+	DbFile = ""
 	pairs  = make(map[string]string)
 	mutex  = &sync.RWMutex{}
 )
 
 func Init() {
-	dbFile = os.Getenv("FILE_STORAGE_PATH")
-	if dbFile == "" {
+	if DbFile == "" {
 		return
 	}
 
-	pairsStr, err := ioutil.ReadFile(dbFile)
+	pairsStr, err := ioutil.ReadFile(DbFile)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +48,7 @@ func SetURL(id, link string) error {
 	pairs[id] = link
 	mutex.Unlock()
 
-	if dbFile == "" {
+	if DbFile == "" {
 		return nil
 	}
 
@@ -59,7 +57,7 @@ func SetURL(id, link string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(dbFile, []byte(jsonStr), 0666)
+	err = ioutil.WriteFile(DbFile, []byte(jsonStr), 0666)
 	if err != nil {
 		return err
 	}

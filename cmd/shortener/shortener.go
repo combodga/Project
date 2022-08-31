@@ -17,7 +17,9 @@ func main() {
 		baseURL = "http://" + serverAddr
 	}
 
-	err := app.Start(serverAddr, baseURL)
+	dbFile := os.Getenv("FILE_STORAGE_PATH")
+
+	err := app.Start(serverAddr, baseURL, dbFile)
 	if err != nil {
 		panic(err)
 	}
