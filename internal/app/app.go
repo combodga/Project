@@ -10,7 +10,7 @@ import (
 func Start(serverAddr, baseURL, dbFile string) error {
 	handler.ServerAddr = serverAddr
 	handler.BaseURL = baseURL
-	storage.DbFile = dbFile
+	storage.DBFile = dbFile
 
 	e := echo.New()
 	e.POST("/", handler.CreateURL)

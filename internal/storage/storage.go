@@ -7,17 +7,17 @@ import (
 )
 
 var (
-	DbFile = ""
+	DBFile = ""
 	pairs  = make(map[string]string)
 	mutex  = &sync.RWMutex{}
 )
 
 func Init() {
-	if DbFile == "" {
+	if DBFile == "" {
 		return
 	}
 
-	pairsStr, err := ioutil.ReadFile(DbFile)
+	pairsStr, err := ioutil.ReadFile(DBFile)
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +48,7 @@ func SetURL(id, link string) error {
 	pairs[id] = link
 	mutex.Unlock()
 
-	if DbFile == "" {
+	if DBFile == "" {
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func SetURL(id, link string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(DbFile, []byte(jsonStr), 0777)
+	err = ioutil.WriteFile(DBFile, []byte(jsonStr), 0777)
 	if err != nil {
 		return err
 	}
