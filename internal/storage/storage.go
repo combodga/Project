@@ -57,7 +57,7 @@ func SetURL(id, link string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(DbFile, []byte(jsonStr), 0666)
+	err = ioutil.WriteFile(DbFile, []byte(jsonStr), 0777)
 	if err != nil {
 		return err
 	}
