@@ -1,23 +1,39 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/combodga/Project/internal/app"
 )
 
 func main() {
-	serverAddr, ok := os.LookupEnv("SERVER_ADDRESS")
-	if !ok {
-		serverAddr = "localhost:8080"
+	var serverAddr string
+	var baseURL string
+	var dbFile string
+
+	flag.StringVar(&serverAddr, "a", "", "server address")
+	flag.StringVar(&baseURL, "b", "", "base URL")
+	flag.StringVar(&dbFile, "f", "", "file storage path")
+	flag.Parse()
+
+	if serverAddr == "" {
+		serverAddr = os.Getenv("SERVER_ADDRESS")
+		if serverAddr == "" {
+			serverAddr = "localhost:8080"
+		}
 	}
 
-	baseURL, ok := os.LookupEnv("BASE_URL")
-	if !ok {
-		baseURL = "http://" + serverAddr
+	if baseURL == "" {
+		baseURL = os.Getenv("BASE_URL")
+		if baseURL == "" {
+			baseURL = "http://" + serverAddr
+		}
 	}
 
-	dbFile := os.Getenv("FILE_STORAGE_PATH")
+	if dbFile == "" {
+		dbFile = os.Getenv("FILE_STORAGE_PATH")
+	}
 
 	err := app.Start(serverAddr, baseURL, dbFile)
 	if err != nil {
