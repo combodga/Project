@@ -120,7 +120,7 @@ func TestCreateURLInJSON(t *testing.T) {
 		defer result.Body.Close()
 
 		if result.StatusCode != http.StatusCreated {
-			t.Errorf("expected status %v; got %v", http.StatusCreated, result.StatusCode)
+			t.Errorf("expected status %v; got %v for link %v", http.StatusCreated, result.StatusCode, testCase.long)
 		}
 
 		body, err := ioutil.ReadAll(result.Body)
@@ -129,7 +129,7 @@ func TestCreateURLInJSON(t *testing.T) {
 		}
 
 		short := string(body)
-		if short != "{\"result\":\"http://"+Host+":"+Port+"/"+testCase.short+"\"}" {
+		if short != "http://"+Host+":"+Port+"/"+testCase.short {
 			t.Fatalf("expected answer to be %v; got %v", "http://"+Host+":"+Port+"/"+testCase.short, short)
 		}
 	}
