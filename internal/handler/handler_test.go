@@ -123,10 +123,10 @@ func TestCreateURLInJSON(t *testing.T) {
 			t.Errorf("expected status %v; got %v for link %v", http.StatusCreated, result.StatusCode, testCase.long)
 		}
 
-		body, err := ioutil.ReadAll(result.Body)
-		if err != nil {
-			t.Fatalf("could not read response: %v", err)
-		}
+		// body, err := ioutil.ReadAll(result.Body)
+		// if err != nil {
+		// 	t.Fatalf("could not read response: %v", err)
+		// }
 
 		// short := string(body)
 		// expected := "{\"result\":\"http://" + Host + ":" + Port + "/" + testCase.short + "\"}"
