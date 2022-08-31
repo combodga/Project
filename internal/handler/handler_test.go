@@ -130,7 +130,7 @@ func TestCreateURLInJSON(t *testing.T) {
 
 		short := string(body)
 		expected := "{\"result\":\"http://" + Host + ":" + Port + "/" + testCase.short + "\"}"
-		if short != expected {
+		if strings.Compare(short, expected) != 0 {
 			t.Fatalf("expected answer to be %v; got %v", expected, short)
 		}
 	}
