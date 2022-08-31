@@ -5,8 +5,8 @@ import (
 )
 
 func main() {
-	const host string = ""
-	const port string = "8080"
-
-	app.ShortenerStart(host, port)
+	err := app.Start("localhost", "8080")
+	if err != nil {
+		panic(err)
+	}
 }
