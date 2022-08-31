@@ -18,14 +18,6 @@ var (
 	Port = "8080"
 )
 
-// func SetHost(s string) {
-// 	host = s
-// }
-
-// func SetPort(s string) {
-// 	port = s
-// }
-
 func CreateURL(c echo.Context) error {
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {

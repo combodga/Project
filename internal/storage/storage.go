@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/orcaman/concurrent-map/v2"
+	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
 const (
@@ -16,41 +16,41 @@ var (
 )
 
 func Init() {
-  pairsStr, err := ioutil.ReadFile(dbFile)
-  if err != nil {
-    panic(err)
-  }
+	pairsStr, err := ioutil.ReadFile(dbFile)
+	if err != nil {
+		panic(err)
+	}
 
-  m := make(map[string]string)
-  json.Unmarshal(pairsStr, &m)
-  pairs.MSet(m)
+	m := make(map[string]string)
+	json.Unmarshal(pairsStr, &m)
+	pairs.MSet(m)
 }
 
 func GetURL(id string) (string, bool) {
-  if len(id) <= 0 {
-    return "", false
-  }
+	if len(id) <= 0 {
+		return "", false
+	}
 
-  url, ok := pairs.Get(id)
-  if !ok {
-    return "", false
-  }
+	url, ok := pairs.Get(id)
+	if !ok {
+		return "", false
+	}
 
-  return url, true
+	return url, true
 }
 
 func SetURL(id, link string) error {
-  pairs.Set(id, link)
+	pairs.Set(id, link)
 
-  jsonBytes, err := pairs.MarshalJSON()
-  if err != nil {
-    return err
-  }
+	jsonBytes, err := pairs.MarshalJSON()
+	if err != nil {
+		return err
+	}
 
-  err = ioutil.WriteFile(dbFile, jsonBytes, 0666)
-  if err != nil {
-    return err
-  }
+	err = ioutil.WriteFile(dbFile, jsonBytes, 0666)
+	if err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
