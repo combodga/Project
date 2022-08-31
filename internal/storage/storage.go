@@ -21,7 +21,10 @@ func Init() {
 		panic(err)
 	}
 
-	json.Unmarshal(pairsStr, &pairs)
+	err = json.Unmarshal(pairsStr, &pairs)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func GetURL(id string) (string, bool) {
