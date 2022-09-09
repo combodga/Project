@@ -24,7 +24,7 @@ type Handler struct {
 func New(serverAddr, baseURL, dbFile string) *Handler {
 	return &Handler{
 		ServerAddr: serverAddr,
-		BaseURL:    "http://" + baseURL,
+		BaseURL:    baseURL,
 		Storage:    storage.New(dbFile),
 	}
 }
