@@ -8,30 +8,30 @@ import (
 
 type Storage struct {
 	DBFile string
-	Pairs map[string]string
-	Mutex *sync.RWMutex
+	Pairs  map[string]string
+	Mutex  *sync.RWMutex
 }
 
 func New(dbFile string) *Storage {
 	s := &Storage{
 		DBFile: dbFile,
-		Pairs: make(map[string]string),
-		Mutex: &sync.RWMutex{},
+		Pairs:  make(map[string]string),
+		Mutex:  &sync.RWMutex{},
 	}
 
 	if dbFile == "" {
 		return s
 	}
 
-	s.Mutex.RLock()
+	s.Mutex.Lock()
 	pairsStr, err := os.ReadFile(dbFile)
 	if err != nil {
-		s.Mutex.RUnlock()
+		s.Mutex.Unlock()
 		panic(err)
 	}
 
 	err = json.Unmarshal(pairsStr, &s.Pairs)
-	s.Mutex.RUnlock()
+	s.Mutex.Unlock()
 	if err != nil {
 		panic(err)
 	}
@@ -44,9 +44,9 @@ func (s *Storage) GetURL(id string) (string, bool) {
 		return "", false
 	}
 
-	s.Mutex.RLock()
+	s.Mutex.Lock()
 	url, ok := s.Pairs[id]
-	s.Mutex.RUnlock()
+	s.Mutex.Unlock()
 	if !ok {
 		return "", false
 	}
