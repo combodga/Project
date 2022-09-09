@@ -25,16 +25,14 @@ func New(dbFile string) *Storage {
 
 	s.Mutex.Lock()
 	pairsStr, err := os.ReadFile(dbFile)
-	if err != nil {
-		s.Mutex.Unlock()
-		panic(err)
+	if err == nil {
+		err = json.Unmarshal(pairsStr, &s.Pairs)
+		if err != nil {
+			s.Mutex.Unlock()
+			panic(err)
+		}
 	}
-
-	err = json.Unmarshal(pairsStr, &s.Pairs)
 	s.Mutex.Unlock()
-	if err != nil {
-		panic(err)
-	}
 
 	return s
 }
