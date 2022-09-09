@@ -17,15 +17,15 @@ import (
 
 type Handler struct {
 	ServerAddr string
-	BaseURL string
-	Storage *storage.Storage
+	BaseURL    string
+	Storage    *storage.Storage
 }
 
 func New(serverAddr, baseURL, dbFile string) *Handler {
 	return &Handler{
 		ServerAddr: serverAddr,
-		BaseURL: baseURL,
-		Storage: storage.New(dbFile),
+		BaseURL:    "http://" + baseURL,
+		Storage:    storage.New(dbFile),
 	}
 }
 
@@ -41,12 +41,12 @@ func (h *Handler) CreateURL(c echo.Context) error {
 
 	link := string(body)
 
-	id, err := h.fetchId(c, link)
+	id, err := h.fetchID(c, link)
 	if err != nil {
 		return err
 	}
 
-	return c.String(http.StatusCreated, h.BaseURL + "/" + id)
+	return c.String(http.StatusCreated, h.BaseURL+"/"+id)
 }
 
 func (h *Handler) CreateURLInJSON(c echo.Context) error {
@@ -66,7 +66,7 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 		return errors.New("error reading json")
 	}
 
-	id, err := h.fetchId(c, link)
+	id, err := h.fetchID(c, link)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (h *Handler) RetrieveURL(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (h *Handler) fetchId(c echo.Context, link string) (string, error) {
+func (h *Handler) fetchID(c echo.Context, link string) (string, error) {
 	if len(link) > 2048 {
 		return "", c.String(http.StatusBadRequest, "error, the link cannot be longer than 2048 characters")
 	}
