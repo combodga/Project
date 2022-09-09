@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"sync"
 )
@@ -25,14 +26,20 @@ func New(dbFile string) *Storage {
 
 	s.Mutex.Lock()
 	pairsStr, err := os.ReadFile(dbFile)
-	if err == nil {
-		err = json.Unmarshal(pairsStr, &s.Pairs)
-		if err != nil {
-			s.Mutex.Unlock()
-			panic(err)
-		}
+	if errors.Is(err, os.ErrNotExist) {
+		s.Mutex.Unlock()
+		return s
 	}
+	if err != nil {
+		s.Mutex.Unlock()
+		panic(err)
+	}
+
+	err = json.Unmarshal(pairsStr, &s.Pairs)
 	s.Mutex.Unlock()
+	if err != nil {
+		panic(err)
+	}
 
 	return s
 }
