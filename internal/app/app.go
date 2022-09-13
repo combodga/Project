@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/combodga/Project/internal/handler"
 
 	"github.com/labstack/echo/v4"
@@ -8,7 +10,10 @@ import (
 )
 
 func Start(serverAddr, baseURL, dbFile string) error {
-	h := handler.New(serverAddr, baseURL, dbFile)
+	h, err := handler.New(serverAddr, baseURL, dbFile)
+	if err != nil {
+		return fmt.Errorf("handler: %v", err)
+	}
 
 	e := echo.New()
 	e.Use(middleware.Gzip())

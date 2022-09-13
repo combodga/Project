@@ -13,7 +13,7 @@ type Storage struct {
 	Mutex  *sync.RWMutex
 }
 
-func New(dbFile string) *Storage {
+func New(dbFile string) (*Storage, error) {
 	s := &Storage{
 		DBFile: dbFile,
 		Pairs:  make(map[string]string),
@@ -21,27 +21,26 @@ func New(dbFile string) *Storage {
 	}
 
 	if dbFile == "" {
-		return s
+		return s, nil
 	}
 
 	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
 	pairsStr, err := os.ReadFile(dbFile)
 	if errors.Is(err, os.ErrNotExist) {
-		s.Mutex.Unlock()
-		return s
+		return s, nil
 	}
 	if err != nil {
-		s.Mutex.Unlock()
-		panic(err)
+		return s, err
 	}
 
 	err = json.Unmarshal(pairsStr, &s.Pairs)
-	s.Mutex.Unlock()
 	if err != nil {
-		panic(err)
+		return s, err
 	}
 
-	return s
+	return s, nil
 }
 
 func (s *Storage) GetURL(id string) (string, bool) {
@@ -61,21 +60,20 @@ func (s *Storage) GetURL(id string) (string, bool) {
 
 func (s *Storage) SetURL(id, link string) error {
 	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
 	s.Pairs[id] = link
 
 	if s.DBFile == "" {
-		s.Mutex.Unlock()
 		return nil
 	}
 
 	jsonStr, err := json.Marshal(s.Pairs)
 	if err != nil {
-		s.Mutex.Unlock()
 		return err
 	}
 
 	err = os.WriteFile(s.DBFile, []byte(jsonStr), 0777)
-	s.Mutex.Unlock()
 	if err != nil {
 		return err
 	}

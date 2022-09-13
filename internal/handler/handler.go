@@ -21,12 +21,16 @@ type Handler struct {
 	Storage    *storage.Storage
 }
 
-func New(serverAddr, baseURL, dbFile string) *Handler {
+func New(serverAddr, baseURL, dbFile string) (*Handler, error) {
+	s, err := storage.New(dbFile)
+	if err != nil {
+		err = fmt.Errorf("storage: %v", err)
+	}
 	return &Handler{
 		ServerAddr: serverAddr,
 		BaseURL:    baseURL,
-		Storage:    storage.New(dbFile),
-	}
+		Storage:    s,
+	}, err
 }
 
 type Link struct {
@@ -43,7 +47,7 @@ func (h *Handler) CreateURL(c echo.Context) error {
 
 	id, err := h.fetchID(c, link)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetch id: %v", err)
 	}
 
 	return c.String(http.StatusCreated, h.BaseURL+"/"+id)
@@ -68,7 +72,7 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 
 	id, err := h.fetchID(c, link)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetchID: %v", err)
 	}
 
 	l := &Link{
