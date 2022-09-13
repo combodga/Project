@@ -9,14 +9,14 @@ import (
 
 type Storage struct {
 	DBFile string
-	Pairs  map[string]string
+	Pairs  map[string]map[string]string
 	Mutex  *sync.RWMutex
 }
 
 func New(dbFile string) (*Storage, error) {
 	s := &Storage{
 		DBFile: dbFile,
-		Pairs:  make(map[string]string),
+		Pairs:  make(map[string]map[string]string),
 		Mutex:  &sync.RWMutex{},
 	}
 
@@ -43,13 +43,13 @@ func New(dbFile string) (*Storage, error) {
 	return s, nil
 }
 
-func (s *Storage) GetURL(id string) (string, bool) {
+func (s *Storage) GetURL(user, id string) (string, bool) {
 	if len(id) <= 0 {
 		return "", false
 	}
 
 	s.Mutex.Lock()
-	url, ok := s.Pairs[id]
+	url, ok := s.Pairs[user][id]
 	s.Mutex.Unlock()
 	if !ok {
 		return "", false
@@ -58,11 +58,14 @@ func (s *Storage) GetURL(id string) (string, bool) {
 	return url, true
 }
 
-func (s *Storage) SetURL(id, link string) error {
+func (s *Storage) SetURL(user, id, link string) error {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	s.Pairs[id] = link
+	if len(s.Pairs[user]) == 0 {
+		s.Pairs[user] = make(map[string]string)
+	}
+	s.Pairs[user][id] = link
 
 	if s.DBFile == "" {
 		return nil
@@ -79,4 +82,15 @@ func (s *Storage) SetURL(id, link string) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) ListURL(user string) (map[string]string, bool) {
+	s.Mutex.Lock()
+	list, ok := s.Pairs[user]
+	s.Mutex.Unlock()
+	if !ok {
+		return list, false
+	}
+
+	return list, true
 }
