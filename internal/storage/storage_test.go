@@ -16,7 +16,11 @@ var (
 )
 
 func TestInit(t *testing.T) {
-	S = New("")
+	var err error
+	S, err = New("")
+	if err != nil {
+		t.Fatal("can't start test")
+	}
 }
 
 func TestSetURL(t *testing.T) {
