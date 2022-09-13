@@ -2,40 +2,55 @@ package storage
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"errors"
+	"os"
 	"sync"
 )
 
-var (
-	DBFile = ""
-	pairs  = make(map[string]string)
-	mutex  = &sync.RWMutex{}
-)
-
-func Init() {
-	if DBFile == "" {
-		return
-	}
-
-	pairsStr, err := ioutil.ReadFile(DBFile)
-	if err != nil {
-		panic(err)
-	}
-
-	err = json.Unmarshal(pairsStr, &pairs)
-	if err != nil {
-		panic(err)
-	}
+type Storage struct {
+	DBFile string
+	Pairs  map[string]string
+	Mutex  *sync.RWMutex
 }
 
-func GetURL(id string) (string, bool) {
+func New(dbFile string) (*Storage, error) {
+	s := &Storage{
+		DBFile: dbFile,
+		Pairs:  make(map[string]string),
+		Mutex:  &sync.RWMutex{},
+	}
+
+	if dbFile == "" {
+		return s, nil
+	}
+
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
+	pairsStr, err := os.ReadFile(dbFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return s, nil
+	}
+	if err != nil {
+		return s, err
+	}
+
+	err = json.Unmarshal(pairsStr, &s.Pairs)
+	if err != nil {
+		return s, err
+	}
+
+	return s, nil
+}
+
+func (s *Storage) GetURL(id string) (string, bool) {
 	if len(id) <= 0 {
 		return "", false
 	}
 
-	mutex.RLock()
-	url, ok := pairs[id]
-	mutex.RUnlock()
+	s.Mutex.Lock()
+	url, ok := s.Pairs[id]
+	s.Mutex.Unlock()
 	if !ok {
 		return "", false
 	}
@@ -43,21 +58,22 @@ func GetURL(id string) (string, bool) {
 	return url, true
 }
 
-func SetURL(id, link string) error {
-	mutex.Lock()
-	pairs[id] = link
-	mutex.Unlock()
+func (s *Storage) SetURL(id, link string) error {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
 
-	if DBFile == "" {
+	s.Pairs[id] = link
+
+	if s.DBFile == "" {
 		return nil
 	}
 
-	jsonStr, err := json.Marshal(pairs)
+	jsonStr, err := json.Marshal(s.Pairs)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(DBFile, []byte(jsonStr), 0777)
+	err = os.WriteFile(s.DBFile, []byte(jsonStr), 0777)
 	if err != nil {
 		return err
 	}

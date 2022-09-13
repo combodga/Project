@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -15,50 +15,46 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	ServerAddr = "localhost:8080"
-	BaseURL    = "http://" + ServerAddr
-)
+type Handler struct {
+	ServerAddr string
+	BaseURL    string
+	Storage    *storage.Storage
+}
+
+func New(serverAddr, baseURL, dbFile string) (*Handler, error) {
+	s, err := storage.New(dbFile)
+	if err != nil {
+		err = fmt.Errorf("storage: %v", err)
+	}
+	return &Handler{
+		ServerAddr: serverAddr,
+		BaseURL:    baseURL,
+		Storage:    s,
+	}, err
+}
 
 type Link struct {
 	Result string `json:"result"`
 }
 
-func CreateURL(c echo.Context) error {
-	body, err := ioutil.ReadAll(c.Request().Body)
+func (h *Handler) CreateURL(c echo.Context) error {
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
 	}
 
 	link := string(body)
 
-	if len(link) > 2048 {
-		return c.String(http.StatusBadRequest, "error, the link cannot be longer than 2048 characters")
-	}
-
-	_, err = url.ParseRequestURI(link)
+	id, err := h.fetchID(c, link)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "error, the link is invalid")
+		return fmt.Errorf("fetch id: %v", err)
 	}
 
-	id, ok := storage.GetURL(link)
-	if !ok {
-		id, err = shortener(link)
-		if err != nil {
-			return c.String(http.StatusBadRequest, "error, failed to create a shortened URL")
-		}
-	}
-
-	err = storage.SetURL(id, link)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
-	}
-
-	return c.String(http.StatusCreated, BaseURL+"/"+id)
+	return c.String(http.StatusCreated, h.BaseURL+"/"+id)
 }
 
-func CreateURLInJSON(c echo.Context) error {
-	body, err := ioutil.ReadAll(c.Request().Body)
+func (h *Handler) CreateURLInJSON(c echo.Context) error {
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
 	}
@@ -74,43 +70,52 @@ func CreateURLInJSON(c echo.Context) error {
 		return errors.New("error reading json")
 	}
 
-	if len(link) > 2048 {
-		return c.String(http.StatusBadRequest, "error, the link cannot be longer than 2048 characters")
-	}
-
-	_, err = url.ParseRequestURI(link)
+	id, err := h.fetchID(c, link)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "error, the link is invalid")
-	}
-
-	id, ok := storage.GetURL(link)
-	if !ok {
-		id, err = shortener(link)
-		if err != nil {
-			return c.String(http.StatusBadRequest, "error, failed to create a shortened URL")
-		}
-	}
-
-	err = storage.SetURL(id, link)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
+		return fmt.Errorf("fetchID: %v", err)
 	}
 
 	l := &Link{
-		Result: BaseURL + "/" + id,
+		Result: h.BaseURL + "/" + id,
 	}
 	return c.JSON(http.StatusCreated, l)
 }
 
-func RetrieveURL(c echo.Context) error {
+func (h *Handler) RetrieveURL(c echo.Context) error {
 	id := c.Param("id")
 
-	url, ok := storage.GetURL(id)
+	url, ok := h.Storage.GetURL(id)
 	if !ok {
 		return c.String(http.StatusNotFound, "error, there is no such link")
 	}
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (h *Handler) fetchID(c echo.Context, link string) (string, error) {
+	if len(link) > 2048 {
+		return "", c.String(http.StatusBadRequest, "error, the link cannot be longer than 2048 characters")
+	}
+
+	_, err := url.ParseRequestURI(link)
+	if err != nil {
+		return "", c.String(http.StatusBadRequest, "error, the link is invalid")
+	}
+
+	id, ok := h.Storage.GetURL(link)
+	if !ok {
+		id, err = shortener(link)
+		if err != nil {
+			return "", c.String(http.StatusBadRequest, "error, failed to create a shortened URL")
+		}
+	}
+
+	err = h.Storage.SetURL(id, link)
+	if err != nil {
+		return "", c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
+	}
+
+	return id, nil
 }
 
 func shortener(s string) (string, error) {
