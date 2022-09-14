@@ -38,7 +38,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 	if dbCredentials != "" {
 		db, err := sqlx.Connect("postgres", s.DBCredentials)
 		if err != nil {
-			return s, nil
+			return s, err
 		}
 		defer db.Close()
 
@@ -58,7 +58,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		for rows.Next() {
 			err := rows.StructScan(&link)
 			if err != nil {
-				return s, err
+				return s, nil
 			}
 			if len(s.Pairs[link.User]) == 0 {
 				s.Pairs[link.User] = make(map[string]string)
