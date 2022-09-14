@@ -27,7 +27,7 @@ var (
 
 func TestInit(t *testing.T) {
 	var err error
-	H, err = New("localhost:8080", "http://localhost:8080", "")
+	H, err = New("localhost:8080", "http://localhost:8080", "", "user=a password=b dbname=c sslmode=disable")
 	if err != nil {
 		t.Fatal("can't start test")
 	}
@@ -142,5 +142,21 @@ func TestRetrieveURL(t *testing.T) {
 
 	if result.StatusCode != http.StatusNotFound {
 		t.Errorf("expected status %v; got %v", http.StatusNotFound, result.StatusCode)
+	}
+}
+
+func TestPing(t *testing.T) {
+	e := echo.New()
+	request := httptest.NewRequest(http.MethodGet, "http://"+H.ServerAddr+"/ping", nil)
+
+	recorder := httptest.NewRecorder()
+	c := e.NewContext(request, recorder)
+	H.Ping(c)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	if result.StatusCode != http.StatusInternalServerError {
+		t.Errorf("expected status %v; got %v", http.StatusInternalServerError, result.StatusCode)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/hmac"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	_ "github.com/lib/pq"
 
 	"github.com/combodga/Project/internal/storage"
 
@@ -20,22 +23,24 @@ import (
 )
 
 type Handler struct {
-	ServerAddr string
-	BaseURL    string
-	Storage    *storage.Storage
-	Key        string
+	ServerAddr    string
+	BaseURL       string
+	Storage       *storage.Storage
+	DBCredentials string
+	Key           string
 }
 
-func New(serverAddr, baseURL, dbFile string) (*Handler, error) {
+func New(serverAddr, baseURL, dbFile, dbCredentials string) (*Handler, error) {
 	s, err := storage.New(dbFile)
 	if err != nil {
 		err = fmt.Errorf("storage: %v", err)
 	}
 	return &Handler{
-		ServerAddr: serverAddr,
-		BaseURL:    baseURL,
-		Storage:    s,
-		Key:        "b8ffa0f4-3f11-44b1-b0bf-9109f47e468b",
+		ServerAddr:    serverAddr,
+		BaseURL:       baseURL,
+		Storage:       s,
+		DBCredentials: dbCredentials,
+		Key:           "b8ffa0f4-3f11-44b1-b0bf-9109f47e468b",
 	}, err
 }
 
@@ -121,6 +126,16 @@ func (h *Handler) ListURL(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, arr)
+}
+
+func (h *Handler) Ping(c echo.Context) error {
+	db, err := sql.Open("postgres", h.DBCredentials)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "error, no connection to db")
+	}
+	defer db.Close()
+
+	return c.String(http.StatusOK, "db connected")
 }
 
 func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
