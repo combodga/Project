@@ -9,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Start(serverAddr, baseURL, dbFile string) error {
-	h, err := handler.New(serverAddr, baseURL, dbFile)
+func Start(serverAddr, baseURL, dbFile, dbCredentials string) error {
+	h, err := handler.New(serverAddr, baseURL, dbFile, dbCredentials)
 	if err != nil {
 		return fmt.Errorf("handler: %v", err)
 	}
@@ -22,6 +22,9 @@ func Start(serverAddr, baseURL, dbFile string) error {
 	e.POST("/", h.CreateURL)
 	e.GET("/:id", h.RetrieveURL)
 	e.POST("/api/shorten", h.CreateURLInJSON)
+	e.POST("/api/shorten/batch", h.CreateBatchURL)
+	e.GET("/api/user/urls", h.ListURL)
+	e.GET("/ping", h.Ping)
 
 	e.Logger.Fatal(e.Start(serverAddr))
 
