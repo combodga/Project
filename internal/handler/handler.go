@@ -90,10 +90,9 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 }
 
 func (h *Handler) RetrieveURL(c echo.Context) error {
-	user := getUser(c, h.Key)
 	id := c.Param("id")
 
-	url, ok := h.Storage.GetURL(user, id)
+	url, ok := h.Storage.GetURL(id)
 	if !ok {
 		return c.String(http.StatusNotFound, "error, there is no such link")
 	}
@@ -134,7 +133,7 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 		return "", c.String(http.StatusBadRequest, "error, the link is invalid")
 	}
 
-	id, ok := h.Storage.GetURL(user, link)
+	id, ok := h.Storage.GetURL(link)
 	if !ok {
 		id, err = shortener(link)
 		if err != nil {

@@ -43,19 +43,22 @@ func New(dbFile string) (*Storage, error) {
 	return s, nil
 }
 
-func (s *Storage) GetURL(user, id string) (string, bool) {
+func (s *Storage) GetURL(id string) (string, bool) {
 	if len(id) <= 0 {
 		return "", false
 	}
 
 	s.Mutex.Lock()
-	url, ok := s.Pairs[user][id]
-	s.Mutex.Unlock()
-	if !ok {
-		return "", false
+	defer s.Mutex.Unlock()
+
+	for user, _ := range s.Pairs {
+		url, ok := s.Pairs[user][id]
+		if ok {
+			return url, true
+		}
 	}
 
-	return url, true
+	return "", false
 }
 
 func (s *Storage) SetURL(user, id, link string) error {
