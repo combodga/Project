@@ -91,7 +91,7 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 	return c.JSON(http.StatusCreated, l)
 }
 
-type LinkJson struct {
+type LinkJSON struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
@@ -108,7 +108,7 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 		return err
 	}
 
-	var l []LinkJson
+	var l []LinkJSON
 	err = json.Unmarshal(body, &l)
 	if err != nil {
 		return err
