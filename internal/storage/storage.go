@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 
@@ -36,6 +37,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 	defer s.Mutex.Unlock()
 
 	if dbCredentials != "" {
+		fmt.Println(dbCredentials)
 		db, err := sqlx.Connect("postgres", s.DBCredentials)
 		if err != nil {
 			return s, err
@@ -67,7 +69,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		}
 		err = rows.Err()
 		if err != nil {
-			return s, nil
+			return s, err
 		}
 
 		return s, nil
