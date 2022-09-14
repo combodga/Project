@@ -22,6 +22,7 @@ func Start(serverAddr, baseURL, dbFile, dbCredentials string) error {
 	e.POST("/", h.CreateURL)
 	e.GET("/:id", h.RetrieveURL)
 	e.POST("/api/shorten", h.CreateURLInJSON)
+	e.POST("/api/shorten/batch", h.CreateBatchURL)
 	e.GET("/api/user/urls", h.ListURL)
 	e.GET("/ping", h.Ping)
 

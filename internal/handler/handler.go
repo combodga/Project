@@ -91,6 +91,47 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 	return c.JSON(http.StatusCreated, l)
 }
 
+type LinkJson struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type BatchLink struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
+func (h *Handler) CreateBatchURL(c echo.Context) error {
+	user := getUser(c, h.Key)
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
+
+	var l []LinkJson
+	err = json.Unmarshal(body, &l)
+	if err != nil {
+		return err
+	}
+
+	var bl []BatchLink
+	for result := range l {
+		link := l[result]
+
+		id, err := h.fetchID(c, user, link.OriginalURL)
+		if err != nil {
+			return fmt.Errorf("fetchID: %v", err)
+		}
+
+		bl = append(bl, BatchLink{
+			CorrelationID: link.CorrelationID,
+			ShortURL:      h.BaseURL + "/" + id,
+		})
+	}
+
+	return c.JSON(http.StatusCreated, bl)
+}
+
 func (h *Handler) RetrieveURL(c echo.Context) error {
 	id := c.Param("id")
 
