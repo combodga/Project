@@ -27,7 +27,7 @@ var (
 
 func TestInit(t *testing.T) {
 	var err error
-	H, err = New("localhost:8080", "http://localhost:8080", "")
+	H, err = New("localhost:8080", "http://localhost:8080", "", "")
 	if err != nil {
 		t.Fatal("can't start test")
 	}
