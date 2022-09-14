@@ -18,7 +18,7 @@ var (
 
 func TestInit(t *testing.T) {
 	var err error
-	S, err = New("", "")
+	S, err = New("db", "")
 	if err != nil {
 		t.Fatal("can't start test")
 	}
