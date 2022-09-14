@@ -144,19 +144,3 @@ func TestRetrieveURL(t *testing.T) {
 		t.Errorf("expected status %v; got %v", http.StatusNotFound, result.StatusCode)
 	}
 }
-
-func TestPing(t *testing.T) {
-	e := echo.New()
-	request := httptest.NewRequest(http.MethodGet, "http://"+H.ServerAddr+"/ping", nil)
-
-	recorder := httptest.NewRecorder()
-	c := e.NewContext(request, recorder)
-	H.Ping(c)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	if result.StatusCode != http.StatusInternalServerError {
-		t.Errorf("expected status %v; got %v", http.StatusInternalServerError, result.StatusCode)
-	}
-}
