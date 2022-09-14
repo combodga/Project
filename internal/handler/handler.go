@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/combodga/Project/internal/storage"
 
@@ -55,6 +56,9 @@ func (h *Handler) CreateURL(c echo.Context) error {
 	link := string(body)
 
 	id, err := h.fetchID(c, user, link)
+	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+		return c.String(http.StatusConflict, h.BaseURL+"/"+id)
+	}
 	if err != nil {
 		return fmt.Errorf("fetch id: %v", err)
 	}
@@ -80,14 +84,24 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 		return errors.New("error reading json")
 	}
 
+	uniqueErr := false
 	id, err := h.fetchID(c, user, link)
+	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+		err = nil
+		uniqueErr = true
+	}
 	if err != nil {
-		return fmt.Errorf("fetchID: %v", err)
+		return fmt.Errorf("fetch id: %v", err)
 	}
 
 	l := &Link{
 		Result: h.BaseURL + "/" + id,
 	}
+
+	if uniqueErr {
+		return c.JSON(http.StatusConflict, l)
+	}
+
 	return c.JSON(http.StatusCreated, l)
 }
 
@@ -115,18 +129,28 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 	}
 
 	var bl []BatchLink
+	var uniqueErr bool
 	for result := range l {
 		link := l[result]
 
-		id, err := h.fetchID(c, user, link.OriginalURL)
+		var id string
+		id, err = h.fetchID(c, user, link.OriginalURL)
+		if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+			err = nil
+			uniqueErr = true
+		}
 		if err != nil {
-			return fmt.Errorf("fetchID: %v", err)
+			return fmt.Errorf("fetch id: %v", err)
 		}
 
 		bl = append(bl, BatchLink{
 			CorrelationID: link.CorrelationID,
 			ShortURL:      h.BaseURL + "/" + id,
 		})
+	}
+
+	if uniqueErr {
+		return c.JSON(http.StatusConflict, bl)
 	}
 
 	return c.JSON(http.StatusCreated, bl)
@@ -194,11 +218,14 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 	}
 
 	err = h.Storage.SetURL(user, id, link)
+	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+		return id, err
+	}
 	if err != nil {
 		return "", c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
 	}
 
-	return id, nil
+	return id, err
 }
 
 func shortener(s string) (string, error) {

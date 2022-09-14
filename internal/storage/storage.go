@@ -45,7 +45,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		db.MustExec(`
 			CREATE TABLE IF NOT EXISTS shortener (
 				usr text,
-				short text,
+				short text unique,
 				long text
 			);
 		`)
@@ -55,6 +55,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		if err != nil {
 			return s, err
 		}
+		defer rows.Close()
 		for rows.Next() {
 			err := rows.StructScan(&link)
 			if err != nil {
@@ -125,9 +126,9 @@ func (s *Storage) SetURL(user, id, link string) error {
 		}
 		defer db.Close()
 
-		db.MustExec("INSERT INTO shortener VALUES ($1, $2, $3)", user, id, link)
+		_, err = db.Exec("INSERT INTO shortener VALUES ($1, $2, $3)", user, id, link)
 
-		return nil
+		return err
 	}
 
 	if s.DBFile != "" {
