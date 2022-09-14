@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"crypto/hmac"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -12,8 +11,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	_ "github.com/lib/pq"
 
 	"github.com/combodga/Project/internal/storage"
 
@@ -31,7 +28,7 @@ type Handler struct {
 }
 
 func New(serverAddr, baseURL, dbFile, dbCredentials string) (*Handler, error) {
-	s, err := storage.New(dbFile)
+	s, err := storage.New(dbFile, dbCredentials)
 	if err != nil {
 		err = fmt.Errorf("storage: %v", err)
 	}
@@ -129,11 +126,10 @@ func (h *Handler) ListURL(c echo.Context) error {
 }
 
 func (h *Handler) Ping(c echo.Context) error {
-	db, err := sql.Open("postgres", h.DBCredentials)
-	if err != nil {
+	ok := h.Storage.Ping()
+	if !ok {
 		return c.String(http.StatusInternalServerError, "error, no connection to db")
 	}
-	defer db.Close()
 
 	return c.String(http.StatusOK, "db connected")
 }
