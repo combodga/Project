@@ -51,7 +51,7 @@ func (s *Storage) GetURL(id string) (string, bool) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 
-	for user, _ := range s.Pairs {
+	for user := range s.Pairs {
 		url, ok := s.Pairs[user][id]
 		if ok {
 			return url, true
