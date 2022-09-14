@@ -58,7 +58,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		for rows.Next() {
 			err := rows.StructScan(&link)
 			if err != nil {
-				return s, nil
+				return s, err
 			}
 			if len(s.Pairs[link.User]) == 0 {
 				s.Pairs[link.User] = make(map[string]string)
@@ -67,7 +67,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		}
 		err = rows.Err()
 		if err != nil {
-			return s, err
+			return s, nil
 		}
 
 		return s, nil
