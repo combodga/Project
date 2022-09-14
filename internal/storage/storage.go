@@ -65,6 +65,10 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 			}
 			s.Pairs[link.User][link.ID] = link.Link
 		}
+		err = rows.Err()
+		if err != nil {
+			return s, err
+		}
 
 		return s, nil
 	}
