@@ -22,6 +22,7 @@ func Start(serverAddr, baseURL, dbFile string) error {
 	e.POST("/", h.CreateURL)
 	e.GET("/:id", h.RetrieveURL)
 	e.POST("/api/shorten", h.CreateURLInJSON)
+	e.GET("/api/user/urls", h.ListURL)
 
 	e.Logger.Fatal(e.Start(serverAddr))
 
