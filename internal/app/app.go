@@ -12,7 +12,7 @@ import (
 func Start(serverAddr, baseURL, dbFile, dbCredentials string) error {
 	h, err := handler.New(serverAddr, baseURL, dbFile, dbCredentials)
 	if err != nil {
-		return fmt.Errorf("handler: %v", err)
+		return fmt.Errorf("handler: %w", err)
 	}
 
 	e := echo.New()

@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type Storage struct {
@@ -16,6 +16,7 @@ type Storage struct {
 	DBCredentials string
 	Pairs         map[string]map[string]string
 	Mutex         *sync.RWMutex
+	ErrDupKey     error
 }
 
 type Link struct {
@@ -30,6 +31,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		DBCredentials: dbCredentials,
 		Pairs:         make(map[string]map[string]string),
 		Mutex:         &sync.RWMutex{},
+		ErrDupKey:     fmt.Error("duplicate key"),
 	}
 
 	s.Mutex.Lock()
@@ -38,7 +40,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 	if dbCredentials != "" {
 		db, err := sqlx.Connect("postgres", s.DBCredentials)
 		if err != nil {
-			return s, err
+			return s, fmt.Errorf("db connect: %w", err)
 		}
 		defer db.Close()
 
@@ -53,13 +55,13 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		link := Link{}
 		rows, err := db.Queryx("SELECT * FROM shortener")
 		if err != nil {
-			return s, err
+			return s, fmt.Errorf("read rows: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			err := rows.StructScan(&link)
 			if err != nil {
-				return s, err
+				return s, fmt.Errorf("rows struct scan: %w", err)
 			}
 			if len(s.Pairs[link.User]) == 0 {
 				s.Pairs[link.User] = make(map[string]string)
@@ -68,7 +70,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		}
 		err = rows.Err()
 		if err != nil {
-			return s, err
+			return s, fmt.Errorf("rows error: %w", err)
 		}
 
 		return s, nil
@@ -80,12 +82,12 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 			return s, nil
 		}
 		if err != nil {
-			return s, err
+			return s, fmt.Errorf("read file: %w", err)
 		}
 
 		err = json.Unmarshal(pairsStr, &s.Pairs)
 		if err != nil {
-			return s, err
+			return s, fmt.Errorf("json unmarshal: %w", err)
 		}
 	}
 
@@ -122,24 +124,34 @@ func (s *Storage) SetURL(user, id, link string) error {
 	if s.DBCredentials != "" {
 		db, err := sqlx.Connect("postgres", s.DBCredentials)
 		if err != nil {
-			return err
+			return fmt.Errorf("sql connect: %w", err)
 		}
 		defer db.Close()
 
 		_, err = db.Exec("INSERT INTO shortener VALUES ($1, $2, $3)", user, id, link)
+		if err != nil {
+			if err, ok := err.(*pq.Error); ok {
+			    if err.Code == "23505" {
+			    	return s.ErrDupKey
+			    }
+			}
+		}
 
-		return err
+		if err != nil {
+			return fmt.Errorf("db error: %w", err)
+		}
+		return nil
 	}
 
 	if s.DBFile != "" {
 		jsonStr, err := json.Marshal(s.Pairs)
 		if err != nil {
-			return err
+			return fmt.Errorf("json marshal: %w", err)
 		}
 
 		err = os.WriteFile(s.DBFile, []byte(jsonStr), 0777)
 		if err != nil {
-			return err
+			return fmt.Errorf("write file: %w", err)
 		}
 	}
 
@@ -162,6 +174,11 @@ func (s *Storage) Ping() bool {
 	if err != nil {
 		return false
 	}
-	db.Close()
+	defer db.Close()
+
+    if err = db.Ping(); err != nil {
+        return false
+    }
+
 	return true
 }

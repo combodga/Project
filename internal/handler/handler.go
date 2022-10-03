@@ -31,7 +31,7 @@ type Handler struct {
 func New(serverAddr, baseURL, dbFile, dbCredentials string) (*Handler, error) {
 	s, err := storage.New(dbFile, dbCredentials)
 	if err != nil {
-		err = fmt.Errorf("storage: %v", err)
+		err = fmt.Errorf("new storage: %w", err)
 	}
 	return &Handler{
 		ServerAddr:    serverAddr,
@@ -50,17 +50,17 @@ func (h *Handler) CreateURL(c echo.Context) error {
 	user := getUser(c, h.Key)
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("read request body: %w", err)
 	}
 
 	link := string(body)
 
 	id, err := h.fetchID(c, user, link)
-	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+	if errors.IsError(err, h.Storage.ErrDupKey) {
 		return c.String(http.StatusConflict, h.BaseURL+"/"+id)
 	}
 	if err != nil {
-		return fmt.Errorf("fetch id: %v", err)
+		return fmt.Errorf("fetch id: %w", err)
 	}
 
 	return c.String(http.StatusCreated, h.BaseURL+"/"+id)
@@ -70,13 +70,13 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 	user := getUser(c, h.Key)
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("read request body: %w", err)
 	}
 
 	data := make(map[string]string)
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return err
+		return fmt.Errorf("json unmarshal: %w", err)
 	}
 
 	link, ok := data["url"]
@@ -86,12 +86,12 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 
 	uniqueErr := false
 	id, err := h.fetchID(c, user, link)
-	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+	if errors.IsError(err, h.Storage.ErrDupKey) {
 		err = nil
 		uniqueErr = true
 	}
 	if err != nil {
-		return fmt.Errorf("fetch id: %v", err)
+		return fmt.Errorf("fetch id: %w", err)
 	}
 
 	l := &Link{
@@ -119,13 +119,13 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 	user := getUser(c, h.Key)
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("read request body: %w", err)
 	}
 
 	var l []LinkJSON
 	err = json.Unmarshal(body, &l)
 	if err != nil {
-		return err
+		return fmt.Errorf("json unmarshal: %w", err)
 	}
 
 	var bl []BatchLink
@@ -135,12 +135,12 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 
 		var id string
 		id, err = h.fetchID(c, user, link.OriginalURL)
-		if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+		if errors.IsError(err, h.Storage.ErrDupKey) {
 			err = nil
 			uniqueErr = true
 		}
 		if err != nil {
-			return fmt.Errorf("fetch id: %v", err)
+			return fmt.Errorf("fetch id: %w", err)
 		}
 
 		bl = append(bl, BatchLink{
@@ -218,9 +218,10 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 	}
 
 	err = h.Storage.SetURL(user, id, link)
-	if strings.Contains(fmt.Sprintf("%v", err), "shortener_short_key") {
+	if errors.IsError(err, h.Storage.ErrDupKey) {
 		return id, err
 	}
+
 	if err != nil {
 		return "", c.String(http.StatusInternalServerError, "error, failed to store a shortened URL")
 	}
@@ -231,7 +232,7 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 func shortener(s string) (string, error) {
 	h := crypto.MD5.New()
 	if _, err := h.Write([]byte(s)); err != nil {
-		return "", fmt.Errorf("abbreviation error URL: %v", err)
+		return "", fmt.Errorf("abbreviation error URL: %w", err)
 	}
 
 	hash := string(h.Sum([]byte{}))
