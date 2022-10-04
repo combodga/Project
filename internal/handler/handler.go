@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/combodga/Project/internal/storage"
 
@@ -56,7 +55,7 @@ func (h *Handler) CreateURL(c echo.Context) error {
 	link := string(body)
 
 	id, err := h.fetchID(c, user, link)
-	if errors.IsError(err, h.Storage.ErrDupKey) {
+	if errors.Is(err, h.Storage.ErrDupKey) {
 		return c.String(http.StatusConflict, h.BaseURL+"/"+id)
 	}
 	if err != nil {
@@ -86,7 +85,7 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 
 	uniqueErr := false
 	id, err := h.fetchID(c, user, link)
-	if errors.IsError(err, h.Storage.ErrDupKey) {
+	if errors.Is(err, h.Storage.ErrDupKey) {
 		err = nil
 		uniqueErr = true
 	}
@@ -135,7 +134,7 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 
 		var id string
 		id, err = h.fetchID(c, user, link.OriginalURL)
-		if errors.IsError(err, h.Storage.ErrDupKey) {
+		if errors.Is(err, h.Storage.ErrDupKey) {
 			err = nil
 			uniqueErr = true
 		}
@@ -218,7 +217,7 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 	}
 
 	err = h.Storage.SetURL(user, id, link)
-	if errors.IsError(err, h.Storage.ErrDupKey) {
+	if errors.Is(err, h.Storage.ErrDupKey) {
 		return id, err
 	}
 

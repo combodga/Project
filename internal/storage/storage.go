@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 
@@ -31,7 +32,7 @@ func New(dbFile, dbCredentials string) (*Storage, error) {
 		DBCredentials: dbCredentials,
 		Pairs:         make(map[string]map[string]string),
 		Mutex:         &sync.RWMutex{},
-		ErrDupKey:     fmt.Error("duplicate key"),
+		ErrDupKey:     fmt.Errorf("duplicate key"),
 	}
 
 	s.Mutex.Lock()
