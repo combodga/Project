@@ -34,8 +34,8 @@ func TestSetURL(t *testing.T) {
 }
 
 func TestGetURL(t *testing.T) {
-	_, ok := S.GetURL("test", "non-existant-key")
-	if ok {
+	_, status := S.GetURL("test", "non-existant-key")
+	if status != 0 {
 		t.Fatal("got value for non existant key")
 	}
 
