@@ -211,9 +211,9 @@ func (h *Handler) DeleteURL(c echo.Context) error {
 	}
 
 	for _, linkToDelete := range l {
-		for id, savedLink := range list {
+		for savedLink := range list {
 			if savedLink == linkToDelete {
-				go h.Storage.UpdateURL(user, id, true)
+				go h.Storage.UpdateURL(user, linkToDelete, true)
 				break
 			}
 		}
