@@ -24,6 +24,7 @@ func Start(serverAddr, baseURL, dbFile, dbCredentials string) error {
 	e.POST("/api/shorten", h.CreateURLInJSON)
 	e.POST("/api/shorten/batch", h.CreateBatchURL)
 	e.GET("/api/user/urls", h.ListURL)
+	e.DELETE("/api/user/urls", h.DeleteURL)
 	e.GET("/ping", h.Ping)
 
 	e.Logger.Fatal(e.Start(serverAddr))

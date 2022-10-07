@@ -27,6 +27,25 @@ type Handler struct {
 	Key           string
 }
 
+type Link struct {
+	Result string `json:"result"`
+}
+
+type LinkJSON struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type BatchLink struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
+type Element struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
 func New(serverAddr, baseURL, dbFile, dbCredentials string) (*Handler, error) {
 	s, err := storage.New(dbFile, dbCredentials)
 	if err != nil {
@@ -39,10 +58,6 @@ func New(serverAddr, baseURL, dbFile, dbCredentials string) (*Handler, error) {
 		DBCredentials: dbCredentials,
 		Key:           "b8ffa0f4-3f11-44b1-b0bf-9109f47e468b",
 	}, err
-}
-
-type Link struct {
-	Result string `json:"result"`
 }
 
 func (h *Handler) CreateURL(c echo.Context) error {
@@ -104,16 +119,6 @@ func (h *Handler) CreateURLInJSON(c echo.Context) error {
 	return c.JSON(http.StatusCreated, l)
 }
 
-type LinkJSON struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-type BatchLink struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
 func (h *Handler) CreateBatchURL(c echo.Context) error {
 	user := getUser(c, h.Key)
 	body, err := io.ReadAll(c.Request().Body)
@@ -156,19 +161,17 @@ func (h *Handler) CreateBatchURL(c echo.Context) error {
 }
 
 func (h *Handler) RetrieveURL(c echo.Context) error {
+	user := getUser(c, h.Key)
 	id := c.Param("id")
 
-	url, ok := h.Storage.GetURL(id)
-	if !ok {
+	url, status := h.Storage.GetURL(user, id)
+	if status == 0 {
 		return c.String(http.StatusNotFound, "error, there is no such link")
+	} else if status == 2 {
+		return c.String(http.StatusGone, "error, link was deleted")
 	}
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
-}
-
-type Element struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
 }
 
 func (h *Handler) ListURL(c echo.Context) error {
@@ -187,6 +190,36 @@ func (h *Handler) ListURL(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, arr)
+}
+
+func (h *Handler) DeleteURL(c echo.Context) error {
+	user := getUser(c, h.Key)
+	list, ok := h.Storage.ListURL(user)
+	if !ok {
+		return c.String(http.StatusBadRequest, "error, you haven't any saved links")
+	}
+
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return fmt.Errorf("read request body: %w", err)
+	}
+
+	var l []string
+	err = json.Unmarshal(body, &l)
+	if err != nil {
+		return fmt.Errorf("json unmarshal: %w", err)
+	}
+
+	for _, linkToDelete := range l {
+		for id, savedLink := range list {
+			if savedLink == linkToDelete {
+				h.Storage.UpdateURL(user, id, true)
+				break
+			}
+		}
+	}
+
+	return c.String(http.StatusAccepted, "URLs deleted")
 }
 
 func (h *Handler) Ping(c echo.Context) error {
@@ -208,8 +241,8 @@ func (h *Handler) fetchID(c echo.Context, user, link string) (string, error) {
 		return "", c.String(http.StatusBadRequest, "error, the link is invalid")
 	}
 
-	id, ok := h.Storage.GetURL(link)
-	if !ok {
+	id, status := h.Storage.GetURL(user, link)
+	if status == 0 {
 		id, err = shortener(link)
 		if err != nil {
 			return "", c.String(http.StatusBadRequest, "error, failed to create a shortened URL")
