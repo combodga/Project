@@ -6,18 +6,19 @@ import (
 
 var (
 	tests = []struct {
+		user  string
 		key   string
 		value string
 	}{
-		{key: "key", value: "value"},
-		{key: "a", value: "b"},
+		{user: "test", key: "key", value: "value"},
+		{user: "test", key: "a", value: "b"},
 	}
 	S *Storage
 )
 
 func TestInit(t *testing.T) {
 	var err error
-	S, err = New("")
+	S, err = New("", "")
 	if err != nil {
 		t.Fatal("can't start test")
 	}
@@ -25,7 +26,7 @@ func TestInit(t *testing.T) {
 
 func TestSetURL(t *testing.T) {
 	for _, testCase := range tests {
-		err := S.SetURL(testCase.key, testCase.value)
+		err := S.SetURL(testCase.user, testCase.key, testCase.value)
 		if err != nil {
 			t.Fatalf("can't save value %v for key %v", testCase.value, testCase.key)
 		}
@@ -33,19 +34,19 @@ func TestSetURL(t *testing.T) {
 }
 
 func TestGetURL(t *testing.T) {
-	_, ok := S.GetURL("non-existant-key")
-	if ok {
+	_, status := S.GetURL("test", "non-existant-key")
+	if status != 0 {
 		t.Fatal("got value for non existant key")
 	}
 
-	_, ok = S.GetURL("")
-	if ok {
+	_, status = S.GetURL("test", "")
+	if status != 0 {
 		t.Fatal("got value for empty key")
 	}
 
 	for _, testCase := range tests {
-		val, ok := S.GetURL(testCase.key)
-		if !ok {
+		val, status := S.GetURL(testCase.user, testCase.key)
+		if status == 0 {
 			t.Fatalf("can't get value for key %v", testCase.key)
 		}
 		if val != testCase.value {
