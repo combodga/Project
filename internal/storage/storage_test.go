@@ -39,14 +39,14 @@ func TestGetURL(t *testing.T) {
 		t.Fatal("got value for non existant key")
 	}
 
-	_, ok = S.GetURL("test", "")
-	if ok {
+	_, status = S.GetURL("test", "")
+	if status != 0 {
 		t.Fatal("got value for empty key")
 	}
 
 	for _, testCase := range tests {
-		val, ok := S.GetURL(testCase.user, testCase.key)
-		if !ok {
+		val, status := S.GetURL(testCase.user, testCase.key)
+		if status == 0 {
 			t.Fatalf("can't get value for key %v", testCase.key)
 		}
 		if val != testCase.value {
